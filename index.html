@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+<style>
+    * {
+        box-sizing: border-box;
+    }
+    video::-webkit-media-controls {
+        display: none !important;
+    }
+    .videoPlayerContainer {
+        width: 500px;
+        border: 1px solid black;
+    }
+    .videoPlayerContainer__controls {
+        width: 100%;
+        /* z-index: 2147483647; */
+        /* position: relative; */
+    }
+     #videoPlayer {
+        width: 100%;
+    }
+    #progressBarCont {
+        margin-top: 10px;
+        width: 500px;
+        height: 10px;
+        border: 1px solid green;
+        display: flex;
+        position: relative;
+        box-sizing: border-box;
+        cursor: pointer;
+    }
+    #progressBar {
+        width: 0px;
+        background: red;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    #progressBar::after {
+        content: "";
+        display: block;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background-color: black;
+        position: absolute;
+        right: -10px;
+    }
+    #playBtn {
+        margin: 10px 0px;
+    }
+    #time {
+        margin-top: 5px;
+        background: red;
+        height: 20px;
+        display: inline-block;
+    }
+    #volumeCont {
+        width: 115px;
+        height: 10px;
+        border: 1px solid red;
+        display: inline-block;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+    #volumeBar {
+        width: 100%;
+        height: 100%;
+        background-color: green;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    #volumeBar::after {
+        content: "";
+        display: block;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background-color: black;
+        position: absolute;
+        right: -10px;
+    }
+</style>
+</head>
+<body>
+    <div class="videoPlayerContainer">
+        <video id="videoPlayer" controls>
+            <source src="videos/video3.mp4">
+        </video>
+
+        <div class="videoPlayerContainer__controls">
+            <div id="time"></div>
+            <button id="muteBtn">Mute</button>
+            <div class="" id="volumeCont">
+                <div id="volumeBar"></div>
+            </div>
+            <button id="fullScreen">[]</button>
+            <div id="progressBarCont">
+                <div id="progressBar"></div>
+            </div>        
+            <button id="playBtn">Play</button>
+        </div><!--videoPlayerContainer__controls-->
+    </div><!--videoPlayerContainer-->
+</body>
+</html>
+
+<script>
+    let videoPlayerFunction = () => {
+        let barSize = 500;
+        let barSpeed = 300;
+        let barSizeVolume = 120;
+        let videoPlayer = document.getElementById("videoPlayer");
+        let progressBarCont = document.getElementById("progressBarCont");
+        let progressBar = document.getElementById("progressBar");
+        let playBtn = document.getElementById("playBtn");
+        let time = document.getElementById("time");
+
+        let volumeCont = document.getElementById("volumeCont");
+        let volumeBar = document.getElementById("volumeBar");
+
+        let muteBtn = document.getElementById("muteBtn");
+        let fullScreen = document.getElementById("fullScreen");
+        let updateBar;
+
+        let update = () => {
+            if(!videoPlayer.ended) {
+                let size = parseInt(videoPlayer.currentTime * barSize / videoPlayer.duration);
+                progressBar.style.width = size+"px";
+            }else {
+                progressBar.style.width = "0px";
+                playBtn.innerHTML = "Play";
+            }
+        }//update
+
+        let playOrPause = () => {
+            if(!videoPlayer.paused && !videoPlayer.ended) {
+                videoPlayer.pause();
+                playBtn.innerHTML = "Play";
+                clearInterval(updateBar);
+            }else {
+                videoPlayer.play();
+                playBtn.innerHTML = "Pause";
+                updateBar = setInterval(update,barSpeed);                
+            }
+        }//playOrPause
+
+        let clickedBar = (e) => {
+            // if(!videoPlayer.paused && !videoPlayer.ended) {
+                let mouseX = e.pageX - progressBarCont.offsetLeft;
+                let newTime = mouseX * videoPlayer.duration / barSize; //პროპორცია. ნაწილის მთელთან შეფარდება დროის და პიქსელების.
+                videoPlayer.currentTime = newTime;
+                progressBar.style.width = mouseX+"px";
+            // }
+        }//clickedBar
+
+        let clickedBarVolume = (e) => {
+            let mouseX = e.pageX - volumeCont.offsetLeft;
+            let newVolume = mouseX / barSizeVolume; //პროპორცია. ნაწილის მთელთან შეფარდება დროის და პიქსელების.
+            if(newVolume > 0  && newVolume < 1) {
+                videoPlayer.volume = newVolume.toFixed(1);
+                volumeBar.style.width = mouseX+"px";
+            }
+            if(videoPlayer.volume === 0) {
+                videoPlayer.muted = true;
+                muteBtn.innerHTML = "Unmute";
+            }
+            if(videoPlayer.volume > 0) {
+                videoPlayer.muted = false;
+                muteBtn.innerHTML = "Mute";
+            }
+        }//clickedBarVolume
+
+        let muteOrNot = () => {
+            if(videoPlayer.muted) {
+                videoPlayer.muted = false;
+                muteBtn.innerHTML = "Mute";  
+                volumeBar.style.width = barSizeVolume+"px";      
+            }else {
+                videoPlayer.muted = true;
+                muteBtn.innerHTML = "Unmute";
+                volumeBar.style.width = "0px"; 
+            }
+        }//muteOrNot
+
+        let displayTime = () => {
+            let currentMinute = parseInt(videoPlayer.currentTime / 60);
+            let currentSecond = parseInt(videoPlayer.currentTime - currentMinute * 60);
+
+            let durMinute = parseInt(videoPlayer.duration / 60);
+            let durSecond = parseInt(videoPlayer.duration - durMinute * 60);
+
+            (currentMinute < 10) ? currentMinute = "0"+currentMinute : currentMinute;
+            (currentSecond < 10) ? currentSecond = "0"+currentSecond : currentSecond;
+
+            (durMinute < 10) ? durMinute = "0"+durMinute : durMinute;
+            (durSecond < 10) ? durSecond = "0"+durSecond : durSecond;
+            if(videoPlayer.ended) {currentSecond = "00"; currentMinute = "00"}
+
+            time.innerHTML = currentMinute+" : "+currentSecond+" / "+durMinute+" : "+durSecond;
+        }//displayTime
+
+        displayTime();
+        playBtn.addEventListener("click",playOrPause,false);
+        // progressBarCont.addEventListener("click",clickedBar,false);
+
+        progressBarCont.addEventListener("mousedown",function(){
+            this.addEventListener("mousemove",clickedBar,false);
+        },false);
+        progressBarCont.addEventListener("mouseup", function(e){
+            this.removeEventListener("mousemove", clickedBar,false);
+        });
+        progressBarCont.addEventListener("mouseleave",function(){
+            this.removeEventListener("mousemove", clickedBar,false);
+        },false);
+
+        //////////////////////////////////////////////////////////
+
+        volumeCont.addEventListener("mousedown",function(){
+            this.addEventListener("mousemove",clickedBarVolume,false);
+        },false);
+        volumeCont.addEventListener("mouseup", function(e){
+            this.removeEventListener("mousemove", clickedBarVolume,false);
+        });
+        volumeCont.addEventListener("mouseleave",function(){
+            this.removeEventListener("mousemove", clickedBarVolume,false);
+        },false);
+
+///////////////////////////////////////////////////////////////////////////////////////////
+        let smallPlayer = document.createElement("div");
+        smallPlayer.setAttribute("id","smallPlayerId");
+        smallPlayer.style.width = "156px";
+        smallPlayer.style.height = "96px";
+        smallPlayer.style.border = "1px solid red";
+        smallPlayer.style.position = "absolute";
+        smallPlayer.style.bottom = "20px";
+        smallPlayer.style.display = "none";
+        smallPlayer.style.backgroundColor = "orange";
+        let videoPlayerClone = videoPlayer.cloneNode(true);
+        videoPlayerClone.style.width = "100%";
+        videoPlayerClone.style.height = "100%";
+        videoPlayerClone.style.backgroundColor = "green";
+        videoPlayerClone.style.objectFit = "fill"
+        videoPlayerClone.removeAttribute("controls");
+        // videoPlayerClone.muted = true;
+        
+        smallPlayer.appendChild(videoPlayerClone);
+        progressBarCont.appendChild(smallPlayer);
+        
+        let quickView = (e) => {
+            smallPlayer.style.display = "block";  
+            // videoPlayerClone.play();  
+            videoPlayerClone.currentTime = videoPlayerClone.duration * (e.pageX - progressBarCont.offsetLeft) / barSize;
+            smallPlayer.style.left = (e.pageX - progressBarCont.offsetLeft) - (smallPlayer.offsetWidth / 2)+"px";
+        }//quickView
+        progressBarCont.addEventListener("mousemove",quickView,false);
+        progressBarCont.addEventListener("mouseleave",function(){
+            smallPlayer.style.display = "none";
+            // videoPlayerClone.pause();
+        },false);
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+        let toggleFullScreen = () => {
+            if(videoPlayer.requestFullScreen){
+                videoPlayer.requestFullScreen();
+            } else if(videoPlayer.webkitRequestFullScreen){
+                videoPlayer.webkitRequestFullScreen();
+            } else if(videoPlayer.mozRequestFullScreen){
+                videoPlayer.mozRequestFullScreen();
+            }
+        }//toggleFullScreen
+
+
+        videoPlayer.addEventListener("timeupdate",displayTime,false);
+        muteBtn.addEventListener("click",muteOrNot);
+        fullScreen.addEventListener("click",toggleFullScreen,false);
+    }//videoPlayerFunction
+
+    window.addEventListener("load",videoPlayerFunction,false);
+</script>
+
+<!-- change favicon if video is playing!!!! -->
